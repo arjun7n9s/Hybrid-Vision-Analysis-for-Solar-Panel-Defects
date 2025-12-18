@@ -1,0 +1,8 @@
+numpy
+torch
+torchvision
+pandas
+Pillow
+onnx
+onnxruntime
+onnxscript
