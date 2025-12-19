@@ -22,6 +22,46 @@ graph LR
     E --> F[Defect Class]
     E --> G[Severity Score]
 ```
+##  System Methodology
+### A. Hybrid Model Architecture
+Our architecture (`code/model.py`) is designed with a "Y" structure:
+
+*   **Branch A (Visual)**: 
+    *   Input: 224x224 RGB Image.
+    *   Model: **VGG16** (Feature Extractor).
+    *   Output: 25,088-dimensional feature vector representing texture and shape.
+*   **Branch B (Time-Series)**:
+    *   Input: 30-day sequence of [Voltage, Current, Temperature, Irradiance].
+    *   Model: **2-Layer LSTM**.
+    *   Output: 128-dimensional context vector capturing trends.
+*   **Fusion Layer**:
+    *   Concatenates Visual + Time-Series vectors.
+    *   Passes through fully connected layers (Dense 4096 -> ReLU -> Dropout).
+    
+    ### B. Multi-Head Predictions
+The fused features feed into three separate prediction heads:
+*   **Head 1: Classification** (Linear Layer). Outputs probabilities for 6 detected classes.
+*   **Head 2: Severity Regression** (Sigmoid). Outputs 0.0 - 1.0 score.
+*   **Head 3: Degradation Regression** (Sigmoid). Outputs 0.0 - 1.0 health score.
+
+### C. Logic: Generating Metrics
+Since real-world labeled severity data effectively doesn't exist, we implemented a robust **Heuristic Logic** (`src/dataset.py`) to train the model:
+
+#### Defect Severity Percentage
+We map each visual class to a foundational severity score based on industry impact standards:
+*   **Clean**: 0% Severity (Perfect)
+*   **Dusty/Soiling**: 20% Severity (Easily fixable)
+*   **Bird-drop**: 30% Severity (Localized heating risk)
+*   **Snow-Covered**: 60% Severity (Major blockage)
+*   **Electrical-damage**: 80% Severity (Internal failure)
+*   **Physical-Damage**: 100% Severity (Permanent structural failure)
+
+#### Predicted Health Percentage
+This metric represents the "Remaining Useful Life" or performance efficiency. It is inversely derived from severity:
+> **Health = 100% - (Severity * Impact Factor)**
+
+For example, a panel with **Physical Damage (100% Severity)** might preserve only **20% Health**, whereas a **Dusty panel (20% Severity)** retains **84% Health**.
+---
 
 ## 3. How to Run Training
 The system uses a physics-based simulator to augment the dataset with synthetic sensor data.
