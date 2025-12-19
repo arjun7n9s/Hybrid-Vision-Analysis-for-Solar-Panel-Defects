@@ -1,7 +1,6 @@
-__pycache__/
-*.pyc
-.venv/
-.env
-*.pth
-*.onnx
-external_repos/
+# Ignore everything
+*
+# Whitelist the project folder
+!BlueScreenBros_Channel1_PS03/
+# Whitelist this file
+!.gitignore
